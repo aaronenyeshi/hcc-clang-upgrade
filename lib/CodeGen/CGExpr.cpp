@@ -93,20 +93,6 @@ llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(llvm::Type *Ty,
                               ArraySize, Name, AllocaInsertPt);
 }
 
-llvm::Instruction *CodeGenFunction::CreateAlloca(llvm::Type *Ty,
-                                                 const Twine &Name,
-                                                 llvm::Instruction *InsertPos) {
-  return new llvm::AllocaInst(Ty,
-      CGM.getDataLayout().getAllocaAddrSpace(), nullptr, Name, InsertPos);
-}
-
-llvm::AllocaInst *
-CodeGenFunction::getAddrSpaceCastedAlloca(llvm::Instruction *V) const {
-  if (auto *Cast = dyn_cast<llvm::AddrSpaceCastInst>(V))
-    return cast<llvm::AllocaInst>(Cast->getOperand(0));
-  return cast<llvm::AllocaInst>(V);
-}
-
 /// CreateDefaultAlignTempAlloca - This creates an alloca with the
 /// default alignment of the corresponding LLVM type, which is *not*
 /// guaranteed to be related in any way to the expected alignment of
@@ -588,6 +574,11 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
   // isn't correct, the object-size check isn't supported by LLVM, and we can't
   // communicate the addresses to the runtime handler for the vptr check.
   if (Ptr->getType()->getPointerAddressSpace())
+    return;
+
+  // Don't check pointers to volatile data. The behavior here is implementation-
+  // defined.
+  if (Ty.isVolatileQualified())
     return;
 
   SanitizerScope SanScope(this);
@@ -1199,6 +1190,11 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
 
   case Expr::MaterializeTemporaryExprClass:
     return EmitMaterializeTemporaryExpr(cast<MaterializeTemporaryExpr>(E));
+
+  case Expr::CoawaitExprClass:
+    return EmitCoawaitLValue(cast<CoawaitExpr>(E));
+  case Expr::CoyieldExprClass:
+    return EmitCoyieldLValue(cast<CoyieldExpr>(E));
   }
 }
 

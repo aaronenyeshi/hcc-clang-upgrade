@@ -964,6 +964,7 @@ void CodeGenFunction::EmitLifetimeEnd(llvm::Value *Size, llvm::Value *Addr) {
 CodeGenFunction::AutoVarEmission
 CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
   QualType Ty = D.getType();
+  assert(Ty.getAddressSpace() == LangAS::Default);
 
   AutoVarEmission emission(D);
 
@@ -1119,18 +1120,6 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
     address = CreateTempAlloca(llvmTy, alignment, "vla", elementCount);
   }
 
-  auto T = D.getType();
-  assert(T.getAddressSpace() == LangAS::Default ||
-         T.getAddressSpace() == LangAS::opencl_private);
-  if (getASTAllocaAddressSpace() != LangAS::Default) {
-    auto *Addr = getTargetHooks().performAddrSpaceCast(
-        *this, address.getPointer(), getASTAllocaAddressSpace(),
-        T.getAddressSpace(),
-        address.getElementType()->getPointerTo(
-            getContext().getTargetAddressSpace(T.getAddressSpace())),
-        /*non-null*/ true);
-    address = Address(Addr, address.getAlignment());
-  }
   setAddrOfLocalVar(&D, address);
   emission.Addr = address;
 

@@ -1916,13 +1916,6 @@ public:
                             LValueBaseInfo *BaseInfo = nullptr);
   LValue EmitLoadOfPointerLValue(Address Ptr, const PointerType *PtrTy);
 
-  /// Create an alloca instruction. If the target address space for auto var
-  /// for the specific language does no match the address space of alloca,
-  /// insert addrspacecast instruction which casts the alloca instruction to
-  /// the expected address space.
-  llvm::Instruction *CreateAlloca(llvm::Type *Ty, const Twine &Name = "tmp",
-                                  llvm::Instruction *InsertPos = nullptr);
-
   /// CreateTempAlloca - This creates an alloca and inserts it into the entry
   /// block if \p ArraySize is nullptr, otherwise inserts it at the current
   /// insertion point of the builder. The caller is responsible for setting an
@@ -1953,10 +1946,6 @@ public:
                            const Twine &Name = "tmp",
                            llvm::Value *ArraySize = nullptr,
                            bool CastToDefaultAddrSpace = true);
-  /// Get alloca instruction operand of an addrspacecast instruction.
-  /// If \p Inst is alloca instruction, returns \p Inst;
-  llvm::AllocaInst *getAddrSpaceCastedAlloca(llvm::Instruction *Inst) const;
-
   /// CreateDefaultAlignedTempAlloca - This creates an alloca with the
   /// default ABI alignment of the given LLVM type.
   ///
@@ -2586,9 +2575,11 @@ public:
   RValue EmitCoawaitExpr(const CoawaitExpr &E,
                          AggValueSlot aggSlot = AggValueSlot::ignored(),
                          bool ignoreResult = false);
+  LValue EmitCoawaitLValue(const CoawaitExpr *E);
   RValue EmitCoyieldExpr(const CoyieldExpr &E,
                          AggValueSlot aggSlot = AggValueSlot::ignored(),
                          bool ignoreResult = false);
+  LValue EmitCoyieldLValue(const CoyieldExpr *E);
   RValue EmitCoroutineIntrinsic(const CallExpr *E, unsigned int IID);
 
   void EnterCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock = false);
