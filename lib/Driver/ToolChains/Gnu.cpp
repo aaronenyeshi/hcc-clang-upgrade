@@ -2387,4 +2387,6 @@ void Generic_ELF::addClangTargetOptions(const ArgList &DriverArgs,
   if (DriverArgs.hasFlag(options::OPT_fuse_init_array,
                          options::OPT_fno_use_init_array, UseInitArrayDefault))
     CC1Args.push_back("-fuse-init-array");
+    CC1Args.push_back("-flto=thin");
+    //CC1Args.push_back("-flto-unit");
 }

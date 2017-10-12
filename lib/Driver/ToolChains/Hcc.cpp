@@ -321,7 +321,7 @@ void HCC::CXXAMPLink::ConstructJob(
         HCC_TOOLCHAIN_RHEL) {
         CmdArgs.push_back("-lstdc++");
     }
-
+    //CmdArgs.push_back("-flto=thin");
     // specify AMDGPU target
     constexpr const char auto_tgt[] = "auto";
 
